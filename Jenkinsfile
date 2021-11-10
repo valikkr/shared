@@ -1,5 +1,5 @@
 pipeline {
-    agent {label 'master'}
+    agent any
     triggers { pollSCM('* * * * *') }
     options {
         buildDiscarder(logRotator(numToKeepStr: '5', artifactNumToKeepStr: '5'))
