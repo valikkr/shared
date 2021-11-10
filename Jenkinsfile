@@ -15,7 +15,7 @@ pipeline {
     stage('Building image') {
       steps{
         script {
-          dockerImage = docker.build imagename
+          sh 'docker build -t shakurit0/my-first-docker-repo .'
         }
       }
     }
