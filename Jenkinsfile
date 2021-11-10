@@ -1,61 +1,40 @@
 pipeline {
-    agent any
-    triggers { pollSCM('* * * * *') }
-    options {
-        buildDiscarder(logRotator(numToKeepStr: '5', artifactNumToKeepStr: '5'))
-        timestamps()
+  environment {
+    imagename = "shakurit0/my-first-docker-repo"
+    registryCredential = 'dockerhub-cred'
+    dockerImage = ''
+  }
+  agent any
+  stages {
+    stage('Cloning Git') {
+      steps {
+        git([url: 'https://github.com/valikkr/shared', branch: 'main'])
+
+      }
     }
-    environment {
-        //TODO # 1 --> once you sign up for Docker hub, use that user_id here
-        registry = "valikkr/dockerhub:${BUILD_NUMBER}"
-        //TODO #2 - update your credentials ID after creating credentials for connecting to Docker Hub
-        registryCredential = 'dockerhub_id'
-        dockerImage = ''
-    }
-    
-    stages {
-        stage('Cloning Git') {
-            steps {
-                // make link via Pipeline Syntax
-                checkout([$class: 'GitSCM', branches: [[name: '*/*']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/valikkr/shared.git']]])       
-            }
-        }
-    
-    // Building Docker images
     stage('Building image') {
       steps{
         script {
-            dockerImage = docker.build registry
+          dockerImage = docker.build imagename
         }
       }
     }
-    
-     // Uploading Docker images into Docker Hub
-    stage('Upload Image') {
-     steps{    
-         script {
-            docker.withRegistry( '', registryCredential ) {
-            dockerImage.push()
-            }
+    stage('Pushing Image') {
+      steps{
+        script {
+          docker.withRegistry( '', registryCredential ) {
+            dockerImage.push("$BUILD_NUMBER")
+             dockerImage.push('latest')
+
+          }
         }
       }
     }
-    
-     // Stopping Docker containers for cleaner Docker run
-     stage('docker stop container') {
-         steps {
-            sh 'docker ps -f name=flask -q | xargs --no-run-if-empty docker container stop'
-            sh 'docker container ls -a -fname=flask -q | xargs -r docker container rm'
-         }
-       }
-    
-    
-    // Running Docker container, make sure port 8096 is opened in 
-    stage('Docker Run') {
-     steps{
-         script {
-            dockerImage.run("-p 5000:5000 --rm --name flask")
-         }
+    stage('Remove Unused docker image') {
+      steps{
+        sh "docker rmi $imagename:$BUILD_NUMBER"
+         sh "docker rmi $imagename:latest"
+
       }
     }
   }
