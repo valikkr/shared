@@ -27,7 +27,7 @@ pipeline {
       steps{
         script {
             dockerImage = docker.build registry
-            dockerImage = docker.build registry_1
+            dockerImage_1 = docker.build registry_1
         }
       }
     }
