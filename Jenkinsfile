@@ -22,7 +22,7 @@ pipeline {
     stage('Pushing Image') {
       steps{
         script {
-          sh 'cat ~/my_password.txt | docker login --username foo --password-stdin'
+          sh 'cat ~/my_password.txt | docker login --username shakurit0 --password-stdin'
            sh 'docker tag flask:latest shakurit0/my-first-docker-repo:${BUILD_NUMBER}'
             sh'docker push shakurit0/my-first-docker-repo:${BUILD_NUMBER}'
         }
