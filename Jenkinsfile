@@ -8,9 +8,10 @@ pipeline {
     environment {
         //TODO # 1 --> once you sign up for Docker hub, use that user_id here
         registry = "shakurit0/my-first-docker-repo:${BUILD_NUMBER}"
+        registry_1 = "shakurit0/my-first-docker-repo:latest"
         //TODO #2 - update your credentials ID after creating credentials for connecting to Docker Hub
         registryCredential = 'dockerhub-cred'
-        dockerImage = ''
+        dockerImage = 'shakurit0/my-first-docker-repo:latest'
     }
     
     stages {
@@ -26,6 +27,7 @@ pipeline {
       steps{
         script {
             dockerImage = docker.build registry
+            dockerImage = docker.build registry_1
         }
       }
     }
@@ -46,6 +48,7 @@ pipeline {
          steps {
             sh 'docker ps -f name=mypythonContainer -q | xargs --no-run-if-empty docker container stop'
             sh 'docker container ls -a -fname=mypythonContainer -q | xargs -r docker container rm'
+            sh ' docker rmi $registry'
          }
        }
     
