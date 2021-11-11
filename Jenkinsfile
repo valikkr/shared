@@ -1,39 +1,61 @@
-pipeline {
-  environment {
-    imagename = "shakurit0/my-first-docker-repo"
-    registryCredential = 'dockerhub-cred'
-    dockerImage = ''
-  }
-  agent any
-  stages {
-    stage('Cloning Git') {
-      steps {
-        checkout([$class: 'GitSCM', branches: [[name: '*/*']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/valikkr/shared.git']]])
-
-      }
+ipeline {
+    agent any
+    triggers { pollSCM('* * * * *') }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '5', artifactNumToKeepStr: '5'))
+        timestamps()
     }
+    environment {
+        //TODO # 1 --> once you sign up for Docker hub, use that user_id here
+        registry = "shakurit0/my-first-docker-repo:${BUILD_NUMBER}"
+        //TODO #2 - update your credentials ID after creating credentials for connecting to Docker Hub
+        registryCredential = 'dockerhub-cred'
+        dockerImage = ''
+    }
+    
+    stages {
+        stage('Cloning Git') {
+            steps {
+                // make link via Pipeline Syntax
+                checkout([$class: 'GitSCM', branches: [[name: '*/dev']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/valikkr/shared']]])       
+            }
+        }
+    
+    // Building Docker images
     stage('Building image') {
       steps{
         script {
-          sh 'docker build -t shakurit0/my-first-docker-repo .'
+            dockerImage = docker.build registry
         }
       }
     }
-    stage('Pushing Image') {
-      steps{
-        script {
-          docker.withRegistry( '', registryCredential ) {
-           sh 'docker tag flask:latest shakurit0/my-first-docker-repo:${BUILD_NUMBER}'
-            sh'docker push shakurit0/my-first-docker-repo:${BUILD_NUMBER}'
-          }
+    
+     // Uploading Docker images into Docker Hub
+    stage('Upload Image') {
+     steps{    
+         script {
+            docker.withRegistry( '', registryCredential ) {
+            dockerImage.push()
+            }
         }
       }
     }
-    stage('Remove Unused docker image') {
-      steps{
-        sh "docker rmi $imagename:$BUILD_NUMBER"
-         sh "docker rmi $imagename:latest"
-
+    
+     // Stopping Docker containers for cleaner Docker run
+     stage('docker stop container') {
+         steps {
+            sh 'docker ps -f name=mypythonContainer -q | xargs --no-run-if-empty docker container stop'
+            sh 'docker container ls -a -fname=mypythonContainer -q | xargs -r docker container rm'
+         }
+       }
+    
+    
+    // Running Docker container, make sure port 8096 is opened in 
+    stage('Docker Run') {
+     steps{
+         script {
+            dockerImage.run("-p 5000:5000 --rm --name mypythonContainer")
+         }
       }
     }
   }
