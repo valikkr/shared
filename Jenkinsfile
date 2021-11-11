@@ -22,10 +22,9 @@ pipeline {
     stage('Pushing Image') {
       steps{
         script {
-          docker.withRegistry( '', registryCredential ) {
-            sh 'docker tag flask:latest shakurit0/my-first-docker-repo:${BUILD_NUMBER}'
-             sh'docker push shakurit0/my-first-docker-repo:${BUILD_NUMBER}'
-          }
+          sh 'cat ~/my_password.txt | docker login --username foo --password-stdin'
+           sh 'docker tag flask:latest shakurit0/my-first-docker-repo:${BUILD_NUMBER}'
+            sh'docker push shakurit0/my-first-docker-repo:${BUILD_NUMBER}'
         }
       }
     }
