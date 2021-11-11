@@ -22,7 +22,7 @@ pipeline {
     stage('Pushing Image') {
       steps{
         script {
-          docker.withRegistry( 'https://www.docker.com/', registryCredential ) {
+          docker.withRegistry( '', registryCredential ) {
            sh 'docker tag flask:latest shakurit0/my-first-docker-repo:${BUILD_NUMBER}'
             sh'docker push shakurit0/my-first-docker-repo:${BUILD_NUMBER}'
           }
