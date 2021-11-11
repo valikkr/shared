@@ -57,7 +57,7 @@ pipeline {
     stage('Docker Run') {
      steps{
          script {
-            dockerImage.run("-p 5000:5000 --rm --name mypythonContainer")
+            dockerImage_1.run("-p 5000:5000 --rm --name mypythonContainer")
          }
       }
     }
